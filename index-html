@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terminal Quest — Linux leren (gratis)</title>
+  <style>
+    :root{
+      --bg:#070b16;
+      --card:#0f1730;
+      --text:#e9eeff;
+      --muted:#aab6ff;
+      --good:#34d399;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.12);
+      --prompt:#8b5cf6;
+      --cmd:#60a5fa;
+      --out:#cbd5e1;
+    }
+    body{
+      margin:0;
+      font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background: radial-gradient(1200px 700px at 20% 10%, #1b2a6a 0%, var(--bg) 45%);
+      color:var(--text);
+    }
+    header{
+      max-width:980px;
+      margin:0 auto;
+      padding:18px 16px 8px;
+    }
+    h1{
+      margin:0;
+      font-size:22px;
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    main{
+      max-width:980px;
+      margin:0 auto;
+      padding:10px 16px 22px;
+      display:grid;
+      gap:12px;
+    }
+    .card{
+      background: rgba(15,23,48,.88);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 10px 26px rgba(0,0,0,.28);
+      backdrop-filter: blur(6px);
+      padding:14px;
+    }
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      user-select:none;
+    }
+    .grid{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 900px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+    }
+    .taskTitle{
+      margin:10px 0 6px;
+      font-size:16px;
+    }
+    .taskDesc{
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.5;
+      white-space:pre-wrap;
+    }
+    .hint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+      display:none;
+      white-space:pre-wrap;
+    }
+    .status{
+      margin-top:10px;
+      font-size:13px;
+      line-height:1.35;
+    }
+    .status.good{ color:var(--good); }
+    .status.bad{ color:var(--bad); }
+
+    /* Terminal UI */
+    .terminal{
+      background: rgba(0,0,0,.38);
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+    }
+    .termTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+    }
+    .termTitle{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .screen{
+      padding:12px;
+      height:320px;
+      overflow:auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:13.5px;
+      line-height:1.45;
+      white-space:pre-wrap;
+    }
+    .prompt{
+      color:var(--prompt);
+    }
+    .cmd{
+      color:var(--cmd);
+    }
+    .out{
+      color:var(--out);
+    }
+    .inputRow{
+      display:flex;
+      gap:10px;
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    input[type="text"]{
+      flex:1;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.30);
+      color:var(--text);
+      outline:none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:14px;
+    }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:10px 12px;
+      color:white;
+      font-weight:650;
+      cursor:pointer;
+      background: rgba(255,255,255,.12);
+      border:1px solid var(--line);
+    }
+    button.primary{
+      background: linear-gradient(180deg, #2a3cff 0%, #1d2aa3 100%);
+      border:0;
+    }
+    button:active{ transform: translateY(1px); }
+
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .mini{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Terminal Quest — Linux leren (gratis)</h1>
+  <div class="sub">
+    Typ Linux commands in een mini-terminal. Levels geven feedback en XP.
+    Werkt op iPhone in Safari/Chrome. Offline gebruik kan via “Zet op beginscherm”.
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="top">
+      <div class="pill" id="levelPill">Level 1 / 10</div>
+      <div class="pill" id="xpPill">XP: 0</div>
+      <div class="pill" id="cwdPill">CWD: /home/player</div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <h2 class="taskTitle" id="taskTitle">...</h2>
+        <div class="taskDesc" id="taskDesc">...</div>
+
+        <div class="btns">
+          <button class="secondary" id="hintBtn">Hint</button>
+          <button class="secondary" id="resetBtn">Reset level</button>
+          <button class="secondary" id="nextBtn">Next ▶</button>
+        </div>
+
+        <div class="status" id="status"></div>
+        <div class="hint" id="hintBox"></div>
+
+        <div class="mini">
+          iPhone tip: open deze pagina → <b>Deel</b> → <b>Zet op beginscherm</b> (dan voelt het als een app).
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div class="termTop">
+          <div class="termTitle">Terminal</div>
+          <div class="termTitle">Enter = run</div>
+        </div>
+
+        <div class="screen" id="screen"></div>
+
+        <div class="inputRow">
+          <input id="cmdInput" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
+                 placeholder="Typ een commando... (bv: ls)" />
+          <button class="primary" id="runBtn">Run</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // -----------------------------
+  // Virtual filesystem (in-memory)
+  // -----------------------------
+  function makeFS(){
+    return {
+      "/": { type:"dir", children:{
+        "home": { type:"dir", children:{
+          "player": { type:"dir", children:{
+            "readme.txt": { type:"file", content:"Welkom bij Terminal Quest.\nTyp 'help' voor basiscommando’s.\n" },
+            "docs": { type:"dir", children:{
+              "notes.txt": { type:"file", content:"Linux is power.\nZoeken = grep/find.\n" }
+            }},
+          }}
+        }},
+        "var": { type:"dir", children:{
+          "log": { type:"dir", children:{
+            "app.log": { type:"file", content:"INFO boot ok\nWARN low disk\nINFO user login\nERROR connection lost\n" }
+          }}
+        }},
+      }}
+    };
+  }
+
+  function pathJoin(base, part){
+    if(part.startsWith("/")) return normalizePath(part);
+    if(base.endsWith("/")) return normalizePath(base + part);
+    return normalizePath(base + "/" + part);
+  }
+
+  function normalizePath(p){
+    let parts = p.split("/").filter(Boolean);
+    let stack = [];
+    for(let x of parts){
+      if(x === ".") continue;
+      if(x === "..") stack.pop();
+      else stack.push(x);
+    }
+    return "/" + stack.join("/");
+  }
+
+  function getNode(fs, path){
+    path = normalizePath(path);
+    if(path === "/") return fs["/"];
+    let cur = fs["/"];
+    let parts = path.split("/").filter(Boolean);
+    for(let name of parts){
+      if(!cur || cur.type !== "dir") return null;
+      cur = cur.children[name];
+      if(!cur) return null;
+    }
+    return cur;
+  }
+
+  function ensureDir(fs, path){
+    const n = getNode(fs, path);
+    return n && n.type === "dir";
+  }
+
+  function splitParent(path){
+    path = normalizePath(path);
+    if(path === "/") return ["/", ""];
+    let parts = path.split("/").filter(Boolean);
+    let name = parts.pop();
+    let parent = "/" + parts.join("/");
+    if(parent === "") parent = "/";
+    return [parent, name];
+  }
+
+  function listDir(fs, path){
+    let n = getNode(fs, path);
+    if(!n || n.type !== "dir") return { ok:false, msg:"ls: cannot access: Not a directory" };
+    return { ok:true, items:Object.keys(n.children).sort() };
+  }
+
+  function mkdir(fs, path){
+    let [parent, name] = splitParent(path);
+    let p = getNode(fs, parent);
+    if(!p || p.type !== "dir") return { ok:false, msg:"mkdir: cannot create directory: No such file or directory" };
+    if(p.children[name]) return { ok:false, msg:"mkdir: cannot create directory: File exists" };
+    p.children[name] = { type:"dir", children:{} };
+    return { ok:true, msg:"" };
+  }
+
+  function touch(fs, path){
+    let [parent, name] = splitParent(path);
+    let p = getNode(fs, parent);
+    if(!p || p.type !== "dir") return { ok:false, msg:"touch: cannot touch: No such file or directory" };
+    if(!p.children[name]) p.children[name] = { type:"file", content:"" };
+    if(p.children[name].type !== "file") return { ok:false, msg:"touch: cannot touch: Is a directory" };
+    return { ok:true, msg:"" };
+  }
+
+  function cat(fs, path){
+    let n = getNode(fs, path);
+    if(!n) return { ok:false, msg:"cat: No such file" };
+    if(n.type !== "file") return { ok:false, msg:"cat: Is a directory" };
+    return { ok:true, msg:n.content };
+  }
+
+  function echoToFile(fs, text, path, append=false){
+    let [parent, name] = splitParent(path);
+    let p = getNode(fs, parent);
+    if(!p || p.type !== "dir") return { ok:false, msg:"echo: No such file or directory" };
+    if(!p.children[name]) p.children[name] = { type:"file", content:"" };
+    let f = p.children[name];
+    if(f.type !== "file") return { ok:false, msg:"echo: Target is a directory" };
+    f.content = append ? (f.content + text + "\n") : (text + "\n");
+    return { ok:true, msg:"" };
+  }
+
+  function rm(fs, path){
+    let [parent, name] = splitParent(path);
+    let p = getNode(fs, parent);
+    if(!p || p.type !== "dir") return { ok:false, msg:"rm: cannot remove: No such file or directory" };
+    if(!p.children[name]) return { ok:false, msg:"rm: cannot remove: No such file" };
+    delete p.children[name];
+    return { ok:true, msg:"" };
+  }
+
+  function cp(fs, src, dst){
+    let s = getNode(fs, src);
+    if(!s) return { ok:false, msg:"cp: cannot stat: No such file" };
+    if(s.type !== "file") return { ok:false, msg:"cp: om deze game simpel te houden kun je alleen files kopiëren" };
+    let [parent, name] = splitParent(dst);
+    let p = getNode(fs, parent);
+    if(!p || p.type !== "dir") return { ok:false, msg:"cp: target directory does not exist" };
+    p.children[name] = { type:"file", content:s.content };
+    return { ok:true, msg:"" };
+  }
+
+  function mv(fs, src, dst){
+    let [sp, sn] = splitParent(src);
+    let p = getNode(fs, sp);
+    if(!p || p.type !== "dir" || !p.children[sn]) return { ok:false, msg:"mv: cannot stat: No such file" };
+    let node = p.children[sn];
+
+    let [dp, dn] = splitParent(dst);
+    let dparent = getNode(fs, dp);
+    if(!dparent || dparent.type !== "dir") return { ok:false, msg:"mv: target directory does not exist" };
+
+    dparent.children[dn] = node;
+    delete p.children[sn];
+    return { ok:true, msg:"" };
+  }
+
+  function grep(fs, pattern, path){
+    let n = getNode(fs, path);
+    if(!n) return { ok:false, msg:"grep: No such file" };
+    if(n.type !== "file") return { ok:false, msg:"grep: Is a directory" };
+    let lines = n.content.split("\n");
+    let hits = lines.filter(l => l.includes(pattern));
+    return { ok:true, msg:hits.join("\n").trim() };
+  }
+
+  function find(fs, startPath, name){
+    let start = getNode(fs, startPath);
+    if(!start || start.type !== "dir") return { ok:false, msg:"find: start path is not a directory" };
+    let results = [];
+    function walk(node, curPath){
+      if(node.type === "dir"){
+        for(let k of Object.keys(node.children)){
+          let child = node.children[k];
+          let nextPath = curPath === "/" ? ("/" + k) : (curPath + "/" + k);
+          if(k === name) results.push(nextPath);
+          walk(child, nextPath);
+        }
+      }
+    }
+    walk(start, normalizePath(startPath));
+    return { ok:true, msg: results.join("\n").trim() };
+  }
+
+  // -----------------------------
+  // Game levels
+  // -----------------------------
+  const levels = [
+    {
+      title: "Level 1 — Waar ben je?",
+      desc: "Gebruik een commando om je huidige map te printen.",
+      hint: "Gebruik:\n\npwd",
+      check: (state, cmd, output) => cmd === "pwd" && output.includes("/home/player"),
+    },
+    {
+      title: "Level 2 — Kijk wat er ligt",
+      desc: "Toon de bestanden in je huidige map.",
+      hint: "Gebruik:\n\nls",
+      check: (state, cmd, output) => cmd === "ls" && output.includes("readme.txt") && output.includes("docs"),
+    },
+    {
+      title: "Level 3 — Ga naar een submap",
+      desc: "Ga naar de map docs.",
+      hint: "Gebruik:\n\ncd docs",
+      check: (state, cmd, output) => cmd === "cd docs" && state.cwd.endsWith("/home/player/docs"),
+    },
+    {
+      title: "Level 4 — Lees een bestand",
+      desc: "Lees het bestand notes.txt en bekijk de inhoud.",
+      hint: "Gebruik:\n\ncat notes.txt",
+      check: (state, cmd, output) => cmd === "cat notes.txt" && output.toLowerCase().includes("linux"),
+    },
+    {
+      title: "Level 5 — Maak een nieuwe map",
+      desc: "Maak een map aan met de naam projects (in /home/player).",
+      hint: "Ga terug en maak de map:\n\ncd ..\n\nmkdir projects",
+      check: (state, cmd, output) => ensureDir(state.fs, "/home/player/projects"),
+    },
+    {
+      title: "Level 6 — Maak een bestand",
+      desc: "Maak een leeg bestand todo.txt in de map projects.",
+      hint: "Gebruik:\n\ncd projects\n\ntouch todo.txt",
+      check: (state, cmd, output) => !!getNode(state.fs, "/home/player/projects/todo.txt"),
+    },
+    {
+      title: "Level 7 — Schrijf tekst naar een bestand",
+      desc: "Schrijf één regel tekst naar todo.txt:\n\nlearn linux",
+      hint: "Gebruik (let op quotes):\n\necho \"learn linux\" > todo.txt",
+      check: (state, cmd, output) => {
+        const n = getNode(state.fs, "/home/player/projects/todo.txt");
+        return n && n.type === "file" && n.content.trim() === "learn linux";
+      }
+    },
+    {
+      title: "Level 8 — Kopieer een bestand",
+      desc: "Maak een kopie van todo.txt met de naam todo_backup.txt.",
+      hint: "Gebruik:\n\ncp todo.txt todo_backup.txt",
+      check: (state, cmd, output) => {
+        const a = getNode(state.fs, "/home/player/projects/todo.txt");
+        const b = getNode(state.fs, "/home/player/projects/todo_backup.txt");
+        return a && b && a.type === "file" && b.type === "file" && a.content === b.content;
+      }
+    },
+    {
+      title: "Level 9 — Zoek in logs (grep)",
+      desc: "Zoek in /var/log/app.log naar regels met ERROR.",
+      hint: "Gebruik:\n\ngrep ERROR /var/log/app.log",
+      check: (state, cmd, output) => cmd === "grep ERROR /var/log/app.log" && output.includes("ERROR"),
+    },
+    {
+      title: "Level 10 — Vind een bestand (find)",
+      desc: "Zoek vanaf /home naar het bestand notes.txt.",
+      hint: "Gebruik:\n\nfind /home notes.txt",
+      check: (state, cmd, output) => cmd === "find /home notes.txt" && output.includes("/home/player/docs/notes.txt"),
+    },
+  ];
+
+  // -----------------------------
+  // Terminal engine (parser)
+  // -----------------------------
+  const el = {
+    levelPill: document.getElementById("levelPill"),
+    xpPill: document.getElementById("xpPill"),
+    cwdPill: document.getElementById("cwdPill"),
+    taskTitle: document.getElementById("taskTitle"),
+    taskDesc: document.getElementById("taskDesc"),
+    status: document.getElementById("status"),
+    hintBtn: document.getElementById("hintBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    hintBox: document.getElementById("hintBox"),
+    screen: document.getElementById("screen"),
+    cmdInput: document.getElementById("cmdInput"),
+    runBtn: document.getElementById("runBtn"),
+  };
+
+  let state = {
+    fs: makeFS(),
+    cwd: "/home/player",
+    level: 0,
+    xp: 0,
+    solved: new Set(),
+    history: [],
+    hIndex: -1
+  };
+
+  function setStatus(msg, kind=""){
+    el.status.textContent = msg;
+    el.status.className = "status " + kind;
+  }
+
+  function writeLinePrompt(cmd){
+    const p = `player@quest:${state.cwd}$ `;
+    el.screen.innerHTML += `<span class="prompt">${escapeHtml(p)}</span><span class="cmd">${escapeHtml(cmd)}</span>\n`;
+    el.screen.scrollTop = el.screen.scrollHeight;
+  }
+
+  function writeOutput(text){
+    if(text === undefined || text === null) return;
+    if(String(text).length === 0) return;
+    el.screen.innerHTML += `<span class="out">${escapeHtml(text)}</span>\n`;
+    el.screen.scrollTop = el.screen.scrollHeight;
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function loadLevel(i){
+    state.level = i;
+    el.levelPill.textContent = `Level ${i+1} / ${levels.length}`;
+    el.xpPill.textContent = `XP: ${state.xp}`;
+    el.cwdPill.textContent = `CWD: ${state.cwd}`;
+    el.taskTitle.textContent = levels[i].title;
+    el.taskDesc.textContent = levels[i].desc;
+    el.hintBox.style.display = "none";
+    setStatus("");
+    el.cmdInput.value = "";
+    el.cmdInput.focus();
+
+    // Clear terminal screen and show welcome for each level
+    el.screen.innerHTML = "";
+    writeOutput("Terminal Quest gestart.");
+    writeOutput("Tip: typ 'help' voor commando-overzicht.");
+  }
+
+  function helpText(){
+    return [
+      "Beschikbaar in deze game:",
+      "",
+      "pwd",
+      "ls",
+      "cd <map>",
+      "mkdir <map>",
+      "touch <file>",
+      "cat <file>",
+      "echo \"text\" > <file>",
+      "echo \"text\" >> <file>",
+      "cp <src> <dst>",
+      "mv <src> <dst>",
+      "rm <file/map>",
+      "grep <tekst> <file>",
+      "find <startpad> <naam>",
+      "",
+      "Extra:",
+      "clear (maakt het scherm leeg)",
+    ].join("\n");
+  }
+
+  function runCommand(raw){
+    let cmd = raw.trim();
+    if(!cmd) return { cmd, out:"" };
+
+    // history
+    state.history.push(cmd);
+    state.hIndex = state.history.length;
+
+    const parts = cmd.split(" ").filter(Boolean);
+    const c = parts[0];
+
+    // common
+    if(c === "clear"){
+      el.screen.innerHTML = "";
+      return { cmd, out:"" };
+    }
+
+    if(c === "help"){
+      return { cmd, out: helpText() };
+    }
+
+    if(c === "pwd"){
+      return { cmd, out: state.cwd };
+    }
+
+    if(c === "ls"){
+      const target = parts[1] ? pathJoin(state.cwd, parts[1]) : state.cwd;
+      const res = listDir(state.fs, target);
+      if(!res.ok) return { cmd, out: res.msg };
+      return { cmd, out: res.items.join("  ") };
+    }
+
+    if(c === "cd"){
+      const arg = parts[1];
+      if(!arg) return { cmd, out:"cd: missing operand" };
+      const target = pathJoin(state.cwd, arg);
+      const n = getNode(state.fs, target);
+      if(!n) return { cmd, out:"cd: no such file or directory" };
+      if(n.type !== "dir") return { cmd, out:"cd: not a directory" };
+      state.cwd = target;
+      el.cwdPill.textContent = `CWD: ${state.cwd}`;
+      return { cmd, out:"" };
+    }
+
+    if(c === "mkdir"){
+      const arg = parts[1];
+      if(!arg) return { cmd, out:"mkdir: missing operand" };
+      const target = pathJoin(state.cwd, arg);
+      const res = mkdir(state.fs, target);
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "touch"){
+      const arg = parts[1];
+      if(!arg) return { cmd, out:"touch: missing file operand" };
+      const target = pathJoin(state.cwd, arg);
+      const res = touch(state.fs, target);
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "cat"){
+      const arg = parts[1];
+      if(!arg) return { cmd, out:"cat: missing file operand" };
+      const target = pathJoin(state.cwd, arg);
+      const res = cat(state.fs, target);
+      return { cmd, out: res.ok ? res.msg : res.msg };
+    }
+
+    // echo "text" > file  OR  echo "text" >> file
+    if(c === "echo"){
+      const full = cmd;
+      const m = full.match(/^echo\s+(".*?"|'.*?')\s+(>>|>)\s+(.+)$/);
+      if(!m) return { cmd, out:"echo: unsupported syntax (use: echo \"text\" > file)" };
+      const quoted = m[1];
+      const op = m[2];
+      const file = m[3].trim();
+      const text = quoted.slice(1, -1);
+      const target = pathJoin(state.cwd, file);
+      const res = echoToFile(state.fs, text, target, op === ">>");
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "rm"){
+      const arg = parts[1];
+      if(!arg) return { cmd, out:"rm: missing operand" };
+      const target = pathJoin(state.cwd, arg);
+      const res = rm(state.fs, target);
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "cp"){
+      if(parts.length < 3) return { cmd, out:"cp: missing file operand" };
+      const src = pathJoin(state.cwd, parts[1]);
+      const dst = pathJoin(state.cwd, parts[2]);
+      const res = cp(state.fs, src, dst);
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "mv"){
+      if(parts.length < 3) return { cmd, out:"mv: missing file operand" };
+      const src = pathJoin(state.cwd, parts[1]);
+      const dst = pathJoin(state.cwd, parts[2]);
+      const res = mv(state.fs, src, dst);
+      return { cmd, out: res.ok ? "" : res.msg };
+    }
+
+    if(c === "grep"){
+      if(parts.length < 3) return { cmd, out:"grep: missing operand" };
+      const pattern = parts[1];
+      const target = parts[2].startsWith("/") ? normalizePath(parts[2]) : pathJoin(state.cwd, parts[2]);
+      const res = grep(state.fs, pattern, target);
+      return { cmd, out: res.ok ? (res.msg || "") : res.msg };
+    }
+
+    if(c === "find"){
+      if(parts.length < 3) return { cmd, out:"find: missing operand" };
+      const start = parts[1].startsWith("/") ? normalizePath(parts[1]) : pathJoin(state.cwd, parts[1]);
+      const name = parts[2];
+      const res = find(state.fs, start, name);
+      return { cmd, out: res.ok ? (res.msg || "") : res.msg };
+    }
+
+    return { cmd, out: `command not found: ${c}` };
+  }
+
+  function checkLevel(cmd, out){
+    const lvl = levels[state.level];
+    const passed = !!lvl.check(state, cmd, out);
+
+    if(passed){
+      if(!state.solved.has(state.level)){
+        state.solved.add(state.level);
+        state.xp += 10;
+        el.xpPill.textContent = `XP: ${state.xp}`;
+      }
+      setStatus("✅ Goed! Level gehaald. Druk op Next om door te gaan.", "good");
+    } else {
+      setStatus("❌ Nog niet. Probeer opnieuw of gebruik Hint.", "bad");
+    }
+  }
+
+  function run(){
+    const raw = el.cmdInput.value;
+    const { cmd, out } = runCommand(raw);
+
+    writeLinePrompt(cmd);
+
+    if(out) writeOutput(out);
+
+    checkLevel(cmd, out);
+
+    el.cmdInput.value = "";
+    el.cmdInput.focus();
+  }
+
+  // Buttons
+  el.runBtn.onclick = run;
+
+  el.cmdInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter"){
+      e.preventDefault();
+      run();
+      return;
+    }
+
+    // Up/down history like a terminal
+    if(e.key === "ArrowUp"){
+      if(state.history.length === 0) return;
+      state.hIndex = Math.max(0, state.hIndex - 1);
+      el.cmdInput.value = state.history[state.hIndex] || "";
+      e.preventDefault();
+    }
+
+    if(e.key === "ArrowDown"){
+      if(state.history.length === 0) return;
+      state.hIndex = Math.min(state.history.length, state.hIndex + 1);
+      el.cmdInput.value = state.history[state.hIndex] || "";
+      e.preventDefault();
+    }
+  });
+
+  el.hintBtn.onclick = () => {
+    const lvl = levels[state.level];
+    el.hintBox.style.display = "block";
+    el.hintBox.textContent = lvl.hint;
+  };
+
+  el.resetBtn.onclick = () => {
+    // reset FS and cwd for clean level runs
+    state.fs = makeFS();
+    state.cwd = "/home/player";
+    el.cwdPill.textContent = `CWD: ${state.cwd}`;
+    loadLevel(state.level);
+  };
+
+  el.nextBtn.onclick = () => {
+    state.level = Math.min(state.level + 1, levels.length - 1);
+    loadLevel(state.level);
+  };
+
+  // Start
+  loadLevel(0);
+</script>
+</body>
+</html>
